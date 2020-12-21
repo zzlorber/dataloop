@@ -1,0 +1,46 @@
+version: "3.0"
+
+services:
+  mongo:
+    image: mongo
+    ports:
+      - '27018:27017'
+    labels:
+      NAME: "mongo"
+    volumes:
+      - './data:/data/db'
+
+  rabbit:
+    image: "rabbitmq:3-management"
+    hostname: "rabbit"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "5672:5672"
+    labels:
+      NAME: "rabbit"
+    volumes:
+      - "./enabled_plugins:/etc/rabbit/enabled_plugins"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5672"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  images:
+    build:
+      context: ./images
+      dockerfile: Dockerfile
+    image: images
+    ports:
+      - "3000:3000"
+    restart: on-failure
+    depends_on:
+      - mongo
+      - rabbit
+    links: 
+      - mongo
+      - rabbit
